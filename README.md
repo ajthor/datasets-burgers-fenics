@@ -1,100 +1,108 @@
-# [YOUR PDE NAME] Dataset
+# 1D Burgers Equation Dataset (FEniCS Implementation)
 
-INSTRUCTIONS FOR CLAUDE:
-1. Replace the title with your specific PDE (e.g., "Heat Equation Dataset", "Navier-Stokes Dataset")  
-2. Update the description with your equation and physical context
-3. Replace the equation with your PDE in mathematical notation
-4. Update variables section with your dataset's return dictionary fields
-5. Update parameters with your PDE-specific parameters
-6. Add any additional sections relevant to your PDE (boundary conditions, physical interpretation, etc.)
-
-Numerical solutions to the [DIMENSION]D [YOUR EQUATION NAME].
+This dataset generates samples from the 1D viscous Burgers equation using FEniCS/DOLFINx for robust finite element simulation of nonlinear PDE dynamics.
 
 ![Sample Plot](sample_plot.png)
 
-## Equation
+## Mathematical Formulation
 
-<!-- TODO: Replace with your PDE in mathematical notation -->
-**Template**: ∂u/∂t = [YOUR_PDE_TERMS]
+**Equation:** 1D viscous Burgers equation
+```
+∂u/∂t + u∂u/∂x = ν∂²u/∂x²,   x ∈ [0, 1], t ∈ [0, T]
+```
 
-**Examples**:
-- Heat equation: ∂u/∂t = α∇²u
-- Wave equation: ∂²u/∂t² = c²∇²u  
-- Navier-Stokes: ∂u/∂t + (u⋅∇)u = -∇p/ρ + ν∇²u
+**Boundary Conditions:** Homogeneous Dirichlet
+```
+u(0, t) = u(1, t) = 0
+```
+
+**Initial Conditions:** Smooth random functions from Gaussian process
+```
+u(x, 0) = u₀(x) ~ GP(0, k(x,x'))
+```
+
+## Physical Significance
+
+The Burgers equation models:
+- **Nonlinear advection** (u∂u/∂x): Wave steepening leading to shock formation
+- **Viscous diffusion** (ν∂²u/∂x²): Smoothing and energy dissipation  
+- **Competition** between nonlinearity and diffusion at different viscosity scales
+
+This makes it ideal for studying operator learning on nonlinear PDEs with shock dynamics.
+
+## Dataset Features
+
+- **Random initial conditions**: GP sampling ensures smooth, diverse profiles
+- **Random viscosity**: ν ∈ [0.01, 0.1] for multi-scale dynamics
+- **Full trajectories**: Complete space-time evolution for operator learning
+- **Robust numerics**: FEniCS + Newton method handles nonlinear terms accurately
 
 ## Variables
 
-<!-- TODO: Update this section with your dataset's return dictionary fields -->
 The dataset returns a dictionary with the following fields:
 
 ### Coordinates
-- `spatial_coordinates`: **CONSISTENT FORMAT** - Spatial grid points
-  - 1D problems: `(N,)` - simple array of x coordinates
-  - 2D problems: `(N, 2)` - array of (x, y) coordinate pairs
-  - 3D problems: `(N, 3)` - array of (x, y, z) coordinate pairs
-- `time_coordinates`: `(time_steps,)` - Time points
+- `spatial_coordinates`: `(Nx,)` - Physical x coordinates on scaled domain
+- `time_coordinates`: `(nt,)` - Time evolution points
 
 ### Solution Fields
-- `u_initial`: ([spatial_dims]) - Initial condition
-- `u_trajectory`: (time_steps, [spatial_dims]) - Primary solution field evolution
-<!-- Add your additional fields:
-- `v_trajectory`: (time_steps, [spatial_dims]) - Secondary field (if applicable)
-- `p_trajectory`: (time_steps, [spatial_dims]) - Pressure field (for fluids)
-- `energy`: (time_steps,) - Energy over time
-- `vorticity`: (time_steps, [spatial_dims]) - Vorticity field
--->
+- `u_initial`: `(Nx,)` - Initial condition u₀(x)
+- `u_trajectory`: `(nt, Nx)` - Complete space-time solution u(x,t)
 
-### Parameters (if included)
-<!-- TODO: List any PDE parameters included in the dataset
-- `diffusion_coeff`: Diffusion coefficient value
-- `wave_speed`: Wave propagation speed
-- `reynolds_number`: Reynolds number (for fluids)
--->
+### Parameters
+- `viscosity`: Viscosity coefficient ν (randomly sampled per sample)
+- `domain_length`: Physical domain length (for coordinate scaling)
+- `timestep`: Time integration step size used
+- `save_interval`: Trajectory sampling interval
 
 ## Dataset Parameters
 
-<!-- TODO: Update with your specific parameters -->
-- **Domain**: [DOMAIN_DESCRIPTION] (e.g., [0, 10] for 1D, [0,1]×[0,1] for 2D)
-- **Grid points**: [GRID_SIZE] (e.g., 1024 for 1D, 128×128 for 2D)
-- **Time range**: [0, FINAL_TIME]
-- **Spatial resolution**: [RESOLUTION_INFO]
-- **Temporal resolution**: [TIME_STEP_INFO]
+- **Computational domain**: [0, 1] (unit interval)
+- **Physical domain**: Scaled to specified length (default: 2π)
+- **Default grid points**: 128 spatial points
+- **Default time range**: [0, 2.0] 
+- **Spatial resolution**: P1 Lagrange finite elements
+- **Temporal resolution**: 0.01 time units with backward Euler
 
 ### PDE-Specific Parameters
-<!-- TODO: Add your equation coefficients and parameters
-- **Diffusion coefficient**: α = [VALUE]
-- **Wave speed**: c = [VALUE] 
-- **Viscosity**: ν = [VALUE]
-- **Boundary conditions**: [DESCRIPTION]
--->
+- **Viscosity range**: ν ∈ [0.01, 0.1] (randomly sampled)
+- **Boundary conditions**: Homogeneous Dirichlet (u = 0 at boundaries)
+- **Initial conditions**: GP-sampled smooth functions with zero BCs
+- **Time integration**: Implicit backward Euler with Newton solver
 
-## Physical Context
+## Installation
 
-<!-- TODO: Add description of the physical system
-**Template**: This dataset simulates [PHYSICAL_SYSTEM] governed by the [EQUATION_NAME]. 
-The equation models [PHYSICAL_PHENOMENA] and is relevant for [APPLICATIONS].
+```bash
+pip install -r requirements.txt
+```
 
-**Examples**:
-- Heat diffusion in a rod with various initial temperature profiles
-- Wave propagation with different boundary conditions
-- Fluid flow in a lid-driven cavity at various Reynolds numbers
--->
+**Note**: Requires FEniCS/DOLFINx installation. Run in appropriate container or environment.
 
 ## Usage
 
+### Basic Usage
 ```python
-from dataset import YourDataset  # Replace with your actual class name
+from dataset import BurgersDataset
 
 # Create dataset
-dataset = YourDataset()
+dataset = BurgersDataset(
+    Lx=2*np.pi,           # Physical domain scaling
+    Nx=128,               # Spatial resolution
+    stop_sim_time=2.0,    # Simulation time
+    timestep=0.01,        # Time step
+    save_interval=10      # Trajectory sampling
+)
 
-# Generate a sample
+# Generate sample
 sample = next(iter(dataset))
+print(f"Initial condition shape: {sample['u_initial'].shape}")
+print(f"Trajectory shape: {sample['u_trajectory'].shape}")
+print(f"Viscosity: {sample['viscosity']:.4f}")
+```
 
-# Access solution data
-spatial_coords = sample["spatial_coordinates"]
-solution = sample["u_trajectory"]
-times = sample["time_coordinates"]
+### Generate Dataset
+```bash
+python generate_data.py  # Creates train/test splits as parquet files
 ```
 
 ## Visualization
@@ -102,9 +110,25 @@ times = sample["time_coordinates"]
 Run the plotting scripts to visualize samples:
 
 ```bash
-python plot_sample.py      # Static visualization
-python plot_animation.py   # Animated evolution
+python plot_sample.py      # 3-panel plot: initial, evolution, comparison
+python plot_animation.py   # Animated shock formation and evolution
 ```
+
+## Implementation Details
+
+- **Solver**: DOLFINx finite elements with Newton's method
+- **Time integration**: Implicit backward Euler for stability  
+- **Spatial discretization**: P1 Lagrange elements on unit interval
+- **Nonlinear solver**: Newton iteration with automatic Jacobian
+- **Boundary conditions**: Essential BCs enforced strongly
+
+## Files
+
+- `dataset.py`: Main BurgersDataset class with FEniCS solver
+- `generate_data.py`: Batch generation and parquet export
+- `plot_sample.py`: 3-panel visualization (initial, evolution, comparison)  
+- `plot_animation.py`: Time evolution animation with shock tracking
+- `requirements.txt`: Dependencies including FEniCS/DOLFINx
 
 ## Data Generation
 

@@ -4,6 +4,4 @@ scikit-learn
 matplotlib
 pyarrow
 pillow
-mpi4py
-petsc4py
-fenics-dolfinx[all]
+scipy

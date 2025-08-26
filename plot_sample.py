@@ -71,14 +71,13 @@ if __name__ == "__main__":
     # Set random seed for reproducibility
     np.random.seed(42)
 
-    # Create Burgers dataset instance
+    # Create Burgers dataset instance  
     dataset = BurgersDataset(
-        Lx=2*np.pi,
-        Nx=128, 
-        viscosity=0.01,
-        stop_sim_time=2.0,
-        timestep=0.01,
-        save_interval=10
+        Lx=2*np.pi,           # Physical domain length
+        Nx=128,               # Spatial grid resolution 
+        stop_sim_time=2.0,    # Simulation time
+        timestep=0.01,        # Time step size
+        save_interval=10      # Trajectory sampling interval
     )
 
     # Generate a single sample

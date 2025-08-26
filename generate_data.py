@@ -31,12 +31,11 @@ def generate_dataset_split(
 
     # Create Burgers dataset with appropriate parameters
     dataset = BurgersDataset(
-        Lx=2*np.pi,           # Domain length
-        Nx=128,               # Grid points
-        viscosity=0.01,       # Viscosity coefficient
-        stop_sim_time=2.0,    # Simulation time
-        timestep=0.01,        # Time step
-        save_interval=10      # Save every 10 steps
+        Lx=2*np.pi,           # Physical domain length (for scaling)  
+        Nx=128,               # Number of spatial grid points
+        stop_sim_time=2.0,    # Final simulation time
+        timestep=0.01,        # Time integration step size
+        save_interval=10      # Save solution every 10 time steps
     )
     
     num_chunks = (num_samples + chunk_size - 1) // chunk_size  # Ceiling division
