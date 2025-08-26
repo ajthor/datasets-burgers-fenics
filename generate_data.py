@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """
-Generate PDE dataset and save to parquet files in chunks.
+Generate 1D Burgers equation dataset and save to parquet files in chunks.
 
-INSTRUCTIONS FOR CLAUDE:
-1. Update the docstring to describe your specific dataset
-2. Update the import statement to match your dataset class name
-3. Update the dataset instantiation call below
-4. The rest of the file should work as-is for any dataset following the template
+This script generates samples from the 1D Burgers equation:
+∂u/∂t + u∂u/∂x = ν∂²u/∂x²
+
+Each sample contains the full space-time evolution from a random 
+smooth initial condition.
 """
 
 import os
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-# TODO: Update this import to match your dataset class name
-from dataset import YourDataset  # Replace YourDataset with your actual class name
+from dataset import BurgersDataset
 
 
 def generate_dataset_split(
@@ -30,11 +29,15 @@ def generate_dataset_split(
 
     os.makedirs(output_dir, exist_ok=True)
 
-    # TODO: Update this instantiation to match your dataset class and parameters
-    dataset = YourDataset()  # Add your dataset parameters here if needed
-    # Examples:
-    # dataset = HeatEquationDataset(Lx=5, Nx=512, diffusion_coeff=0.01)
-    # dataset = WaveDataset(wave_speed=2.0, boundary_conditions="reflective")
+    # Create Burgers dataset with appropriate parameters
+    dataset = BurgersDataset(
+        Lx=2*np.pi,           # Domain length
+        Nx=128,               # Grid points
+        viscosity=0.01,       # Viscosity coefficient
+        stop_sim_time=2.0,    # Simulation time
+        timestep=0.01,        # Time step
+        save_interval=10      # Save every 10 steps
+    )
     
     num_chunks = (num_samples + chunk_size - 1) // chunk_size  # Ceiling division
 

@@ -1,96 +1,85 @@
 #!/usr/bin/env python3
 """
-Plot a single sample from the PDE dataset.
+Plot a single sample from the 1D Burgers equation dataset.
 
-INSTRUCTIONS FOR CLAUDE:
-1. Update the docstring to describe your specific dataset
-2. Update the import statement to match your dataset class name
-3. Update the function name and customize plotting for your PDE
-4. Modify the plotting code to visualize your specific solution fields
+Visualizes the initial condition and space-time evolution of the 
+nonlinear Burgers equation showing shock formation and diffusion.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-# TODO: Update this import to match your dataset class name
-from dataset import YourDataset  # Replace YourDataset with your actual class name
+from dataset import BurgersDataset
 
 
-def plot_pde_sample(sample, save_path="sample_plot.png"):
+def plot_burgers_sample(sample, save_path="sample_plot.png"):
     """
-    Plot a single sample from the PDE dataset.
+    Plot a single sample from the 1D Burgers equation dataset.
     
-    INSTRUCTIONS FOR CLAUDE:
-    - Customize this function for your PDE visualization needs
-    - Modify plot layout, titles, and data fields based on your dataset's return dictionary
-    - Common patterns: 1D time series, 2D heatmaps, multiple fields, vector fields
+    Shows the initial condition and space-time evolution demonstrating
+    shock formation and viscous dissipation.
     """
-    # TODO: Customize plot layout for your PDE
-    # Common layouts: 
-    # - 1D problems: (ax1=initial, ax2=spacetime), or (ax1=initial, ax2=final, ax3=spacetime)
-    # - 2D problems: (ax1=initial, ax2=final), or multiple time snapshots
-    # - Multi-field: separate subplots for each field (u, v, p, etc.)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    # Create figure with three subplots
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(16, 5))
 
-    # TODO: Extract data from your dataset's return dictionary
-    # Replace these with your actual field names
+    # Extract data from sample
     spatial_coordinates = sample["spatial_coordinates"]
     u_initial = sample["u_initial"]
-    u_trajectory = sample["u_trajectory"]
+    u_trajectory = sample["u_trajectory"] 
     time_coordinates = sample["time_coordinates"]
+    viscosity = sample["viscosity"]
     
-    # Additional fields you might want to plot:
-    # v_trajectory = sample.get("v_trajectory")  # Secondary field
-    # energy = sample.get("energy")             # Energy over time
-    # vorticity = sample.get("vorticity")       # Vorticity field
-
-    # TODO: Customize Plot 1 - Initial condition or field comparison
+    # Plot 1: Initial condition
     ax1.plot(spatial_coordinates, u_initial, "b-", linewidth=2)
     ax1.set_xlabel("x")
-    ax1.set_ylabel("u(x, t=0)")
-    ax1.set_title("Initial Condition")  # Update title for your PDE
+    ax1.set_ylabel("u(x, 0)")
+    ax1.set_title("Initial Condition")
     ax1.grid(True, alpha=0.3)
     ax1.set_xlim(0, spatial_coordinates[-1])
     
-    # Examples for other plot types:
-    # 2D initial condition: ax1.imshow(u_initial, extent=[x_min, x_max, y_min, y_max])
-    # Multiple fields: ax1.plot(x, u_initial, 'b-', label='u'); ax1.plot(x, v_initial, 'r-', label='v')
-
-    # TODO: Customize Plot 2 - Space-time evolution or final state
-    im = ax2.pcolormesh(
-        spatial_coordinates,
-        time_coordinates,
-        u_trajectory,
-        cmap="RdBu_r",  # Choose colormap appropriate for your PDE
-        shading="gouraud",
-        rasterized=True,
-    )
-    ax2.set_xlim(0, spatial_coordinates[-1])
-    ax2.set_ylim(0, time_coordinates[-1])
+    # Plot 2: Space-time evolution
+    X, T = np.meshgrid(spatial_coordinates, time_coordinates)
+    im = ax2.pcolormesh(X, T, u_trajectory, cmap="RdBu_r", shading="gouraud", rasterized=True)
     ax2.set_xlabel("x")
     ax2.set_ylabel("t")
-    ax2.set_title("PDE Evolution")  # Update title for your PDE
+    ax2.set_title(f"Burgers Evolution (ν={viscosity:.4f})")
+    ax2.set_xlim(0, spatial_coordinates[-1])
+    ax2.set_ylim(0, time_coordinates[-1])
     
-    # Examples for other plot types:
-    # Final state: ax2.plot(x, u_final, 'r-', label='Final')
-    # Energy plot: ax2.plot(time_coordinates, energy, 'g-'); ax2.set_ylabel('Energy')
-    # Vector field: ax2.quiver(X, Y, U, V)
-
     # Add colorbar
-    plt.colorbar(im, ax=ax2, label="u(x,t)")  # Update label for your field
+    cbar = plt.colorbar(im, ax=ax2)
+    cbar.set_label("u(x,t)")
+    
+    # Plot 3: Final state comparison
+    u_final = u_trajectory[-1, :]
+    ax3.plot(spatial_coordinates, u_initial, "b-", linewidth=2, label="Initial", alpha=0.7)
+    ax3.plot(spatial_coordinates, u_final, "r-", linewidth=2, label="Final")
+    ax3.set_xlabel("x")
+    ax3.set_ylabel("u(x)")
+    ax3.set_title("Initial vs Final State")
+    ax3.grid(True, alpha=0.3)
+    ax3.legend()
+    ax3.set_xlim(0, spatial_coordinates[-1])
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
     plt.close()
 
-    print(f"Sample visualization saved to {save_path}")
+    print(f"Burgers equation visualization saved to {save_path}")
 
 
 if __name__ == "__main__":
     # Set random seed for reproducibility
     np.random.seed(42)
 
-    # TODO: Create your dataset instance
-    dataset = YourDataset()  # Update with your dataset class name
+    # Create Burgers dataset instance
+    dataset = BurgersDataset(
+        Lx=2*np.pi,
+        Nx=128, 
+        viscosity=0.01,
+        stop_sim_time=2.0,
+        timestep=0.01,
+        save_interval=10
+    )
 
     # Generate a single sample
     sample = next(iter(dataset))
@@ -103,4 +92,4 @@ if __name__ == "__main__":
             print(f"{key}: {type(value)} - {value}")
 
     # Plot the sample
-    plot_pde_sample(sample)  # Updated function name
+    plot_burgers_sample(sample)

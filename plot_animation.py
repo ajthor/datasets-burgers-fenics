@@ -1,42 +1,32 @@
 #!/usr/bin/env python3
 """
-Generate an animation GIF of a single PDE sample time evolution.
+Generate an animation GIF of 1D Burgers equation time evolution.
 
-INSTRUCTIONS FOR CLAUDE:
-1. Update the docstring to describe your specific dataset
-2. Update the import statement to match your dataset class name  
-3. Update the function name and customize animation for your PDE
-4. Modify the animation code to visualize your specific solution fields
+Shows the propagation and steepening of waves in the Burgers equation,
+demonstrating shock formation and viscous dissipation.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-# TODO: Update this import to match your dataset class name
-from dataset import YourDataset  # Replace YourDataset with your actual class name
+from dataset import BurgersDataset
 
 
-def create_pde_animation(sample, save_path="sample_animation.gif", fps=10):
+def create_burgers_animation(sample, save_path="sample_animation.gif", fps=10):
     """
-    Create an animation GIF from a PDE sample.
+    Create an animation GIF from a Burgers equation sample.
     
-    INSTRUCTIONS FOR CLAUDE:
-    - Customize this function for your PDE animation needs
-    - Modify plot setup, data extraction, and animation based on your dataset
-    - Common patterns: 1D line plots, 2D heatmaps, vector field animations
+    Shows the time evolution of the 1D Burgers equation with shock formation.
     """
-    # TODO: Extract data from your dataset's return dictionary
+    # Extract data from sample
     spatial_coordinates = sample["spatial_coordinates"]
     u_initial = sample["u_initial"]
     u_trajectory = sample["u_trajectory"]
     time_coordinates = sample["time_coordinates"]
-    
-    # Additional fields you might want to animate:
-    # v_trajectory = sample.get("v_trajectory")  # Secondary field
-    # vorticity = sample.get("vorticity")        # Vorticity evolution
+    viscosity = sample["viscosity"]
 
-    # TODO: Set up the figure and axis for your PDE
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Set up the figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))
     ax.set_xlim(0, spatial_coordinates[-1])
 
     # Determine y-axis limits based on data range
@@ -46,19 +36,14 @@ def create_pde_animation(sample, save_path="sample_animation.gif", fps=10):
     ax.set_ylim(u_min - 0.1 * u_range, u_max + 0.1 * u_range)
 
     ax.set_xlabel("x")
-    ax.set_ylabel("u(x,t)")  # Update label for your field
-    ax.set_title("PDE Evolution Animation")  # Update title
+    ax.set_ylabel("u(x,t)")
+    ax.set_title(f"1D Burgers Equation Evolution (ν={viscosity:.4f})")
     ax.grid(True, alpha=0.3)
 
-    # TODO: Initialize plot elements for animation
-    # For 1D line plots:
-    (line,) = ax.plot([], [], "b-", linewidth=2)
-    # For multiple fields:
-    # (u_line,) = ax.plot([], [], "b-", linewidth=2, label='u')
-    # (v_line,) = ax.plot([], [], "r-", linewidth=2, label='v')
-    # ax.legend()
-    # For 2D heatmaps:
-    # im = ax.imshow(u_trajectory[0], extent=[x_min, x_max, y_min, y_max], animated=True)
+    # Initialize plot elements
+    (current_line,) = ax.plot([], [], "r-", linewidth=2.5, label="Current")
+    (initial_line,) = ax.plot(spatial_coordinates, u_initial, "b--", linewidth=1.5, alpha=0.6, label="Initial")
+    ax.legend(loc='upper right')
     
     time_text = ax.text(
         0.02,
@@ -66,31 +51,20 @@ def create_pde_animation(sample, save_path="sample_animation.gif", fps=10):
         "",
         transform=ax.transAxes,
         bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
+        fontsize=12
     )
 
     def animate(frame):
         """
-        Animation function - customize for your PDE visualization
-        
-        INSTRUCTIONS FOR CLAUDE:
-        - Update this function to animate your specific fields
-        - Return all animated objects for proper blitting
+        Animation function for Burgers equation visualization.
         """
-        # TODO: Update animation for your fields
-        # For 1D line plots:
-        line.set_data(spatial_coordinates, u_trajectory[frame])
-        # For multiple fields:
-        # u_line.set_data(spatial_coordinates, u_trajectory[frame])
-        # v_line.set_data(spatial_coordinates, v_trajectory[frame])
-        # For 2D heatmaps:
-        # im.set_array(u_trajectory[frame])
+        # Update current solution line
+        current_line.set_data(spatial_coordinates, u_trajectory[frame])
         
-        time_text.set_text(f"Time: {time_coordinates[frame]:.3f}")
+        # Update time display
+        time_text.set_text(f"Time: {time_coordinates[frame]:.3f} s")
         
-        # TODO: Return all animated objects
-        return line, time_text
-        # For multiple objects: return u_line, v_line, time_text
-        # For heatmaps: return im, time_text
+        return current_line, time_text
 
     # Create animation
     anim = animation.FuncAnimation(
@@ -113,15 +87,23 @@ if __name__ == "__main__":
     # Set random seed for reproducibility
     np.random.seed(42)
 
-    # TODO: Create your dataset instance
-    dataset = YourDataset()  # Update with your dataset class name
+    # Create Burgers dataset instance
+    dataset = BurgersDataset(
+        Lx=2*np.pi,
+        Nx=128,
+        viscosity=0.01,
+        stop_sim_time=2.0,
+        timestep=0.01,
+        save_interval=5  # Save more frequently for smoother animation
+    )
 
     # Generate a single sample
     sample = next(iter(dataset))
 
-    print("Creating animation...")
+    print("Creating Burgers equation animation...")
     print(f"Time steps: {len(sample['time_coordinates'])}")
     print(f"Spatial points: {len(sample['spatial_coordinates'])}")
+    print(f"Viscosity: {sample['viscosity']}")
 
     # Create animation
-    create_pde_animation(sample)  # Updated function name
+    create_burgers_animation(sample)
