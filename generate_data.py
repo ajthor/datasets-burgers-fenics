@@ -15,6 +15,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from dataset import BurgersDataset
 
+import tqdm
 
 def generate_dataset_split(
     split_name="train", num_samples=1000, chunk_size=100, output_dir="data"
@@ -45,7 +46,7 @@ def generate_dataset_split(
     dataset_iter = iter(dataset)
     chunk_data = None
 
-    for i in range(num_samples):
+    for i in tqdm.tqdm(range(num_samples)):
         sample = next(dataset_iter)
 
         if chunk_data is None:
@@ -63,7 +64,13 @@ def generate_dataset_split(
             # Convert numpy arrays to lists for PyArrow compatibility
             table_data = {}
             for key, values in chunk_data.items():
-                table_data[key] = [arr.tolist() for arr in values]
+                # Handle both numpy arrays and scalar values
+                if hasattr(values[0], 'tolist'):
+                    # Numpy arrays - convert to lists
+                    table_data[key] = [arr.tolist() for arr in values]
+                else:
+                    # Scalar values - keep as is
+                    table_data[key] = values
 
             # Convert to PyArrow table
             table = pa.table(table_data)
@@ -86,7 +93,7 @@ if __name__ == "__main__":
     np.random.seed(42)
 
     # Generate train split
-    generate_dataset_split("train", num_samples=1000, chunk_size=100)
+    generate_dataset_split("train", num_samples=10000, chunk_size=1000)
 
     # Generate test split
-    generate_dataset_split("test", num_samples=200, chunk_size=100)
+    generate_dataset_split("test", num_samples=2000, chunk_size=1000)

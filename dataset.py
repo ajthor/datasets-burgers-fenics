@@ -218,7 +218,8 @@ class BurgersDataset(IterableDataset):
             u_init_array = self.u.x.array.copy()
             
             # Generate random viscosity parameter for this sample
-            viscosity = np.random.uniform(0.01, 0.1)
+            # viscosity = np.random.uniform(0.01, 0.1)
+            viscosity = 0.1
             
             # Solve the PDE and yield result
             yield self.solve(u_init_array, viscosity)
